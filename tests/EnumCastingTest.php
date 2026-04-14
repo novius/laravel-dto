@@ -26,6 +26,11 @@ test('it casts to backed enum int', function () {
     expect($dto->type)->toBe(UserTypeEnum::Admin);
 });
 
+test('it accepts an enum instance', function () {
+    $dto = new EnumCastDto(['status' => UserStatusEnum::Inactive]);
+    expect($dto->status)->toBe(UserStatusEnum::Inactive);
+});
+
 test('it can convert to array with enums', function () {
     $dto = new EnumCastDto([
         'status' => 'inactive',

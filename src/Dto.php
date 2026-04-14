@@ -206,6 +206,10 @@ abstract class Dto
     protected function castToSpecialType(string $type, mixed $value): mixed
     {
         if (is_subclass_of($type, BackedEnum::class) && enum_exists($type)) {
+            if ($value instanceof $type) {
+                return $value;
+            }
+
             return $type::from($value);
         }
 
