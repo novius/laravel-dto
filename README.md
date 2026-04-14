@@ -123,6 +123,7 @@ class UserDto extends Dto
     protected Carbon $created_at; // Automatically cast to Carbon
     protected UserStatus $status; // Automatically cast to Backed Enum
     protected AddressDto $address;// Automatically cast to nested DTO
+    protected Fluent $metadata;   // Automatically cast to Fluent
 }
 ```
 
@@ -130,7 +131,7 @@ If you need more control, you can still override the `casts()` method. Explicit 
 
 Supported types: `int`, `float`, `string`, `bool`, `array`, `object`, `date`, `datetime`, `immutable_date`, `immutable_datetime`, `decimal:x`, `json`, `encrypted`.
 
-You can also cast properties to [Backed Enums](https://www.php.net/manual/en/language.enumerations.backed.php):
+You can also cast properties to [Backed Enums](https://www.php.net/manual/en/language.enumerations.backed.php) or [Fluent](https://laravel.com/api/11.x/Illuminate/Support/Fluent.html) objects:
 
 ```php
 protected function casts(): array

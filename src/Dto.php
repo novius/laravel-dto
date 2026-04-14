@@ -9,6 +9,7 @@ use Closure;
 use DateTimeInterface;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Fluent;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use InvalidArgumentException;
@@ -213,6 +214,10 @@ abstract class Dto
             return $type::from($value);
         }
 
+        if ($type === Fluent::class && is_array($value)) {
+            return new Fluent($value);
+        }
+
         if (is_subclass_of($type, self::class) && is_array($value)) {
             return new $type($value);
         }
@@ -333,6 +338,10 @@ abstract class Dto
     protected function transformValue(mixed $value, string $propertyName): mixed
     {
         if ($value instanceof self) {
+            return $value->toArray();
+        }
+
+        if ($value instanceof Fluent) {
             return $value->toArray();
         }
 

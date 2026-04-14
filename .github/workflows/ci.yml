@@ -42,7 +42,7 @@ jobs:
       - name: Execute tests
         run: composer test -- --compact
 
-      - name: Run analysis
+      - name: Run static analysis
         run: composer analyze
 
       - name: Check style

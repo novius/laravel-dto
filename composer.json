@@ -28,7 +28,8 @@
     "scripts": {
         "lint": "vendor/bin/pint",
         "test": "vendor/bin/pest",
-        "analyze": "vendor/bin/phpstan analyse --memory-limit=512M"
+        "phpstan": "vendor/bin/phpstan analyse --memory-limit=512M",
+        "analyze": "@phpstan"
     },
     "autoload": {
         "psr-4": {
