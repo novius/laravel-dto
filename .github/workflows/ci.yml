@@ -15,13 +15,14 @@ jobs:
       matrix:
         php: [8.2, 8.3, 8.4, 8.5]
         laravel: [11.*, 12.*, 13.*]
+        dependencies: [lowest, stable]
         exclude:
           - php: 8.2
             laravel: 13.*
           - php: 8.3
             laravel: 13.*
 
-    name: PHP ${{ matrix.php }} - Laravel ${{ matrix.laravel }}
+    name: PHP ${{ matrix.php }} - Laravel ${{ matrix.laravel }} (${{ matrix.dependencies }})
 
     steps:
       - name: Checkout code
@@ -37,7 +38,11 @@ jobs:
       - name: Install dependencies
         run: |
           composer require "illuminate/contracts:${{ matrix.laravel }}" "illuminate/support:${{ matrix.laravel }}" "illuminate/validation:${{ matrix.laravel }}" --no-interaction --no-update
-          composer update --prefer-stable --prefer-dist --no-interaction
+          if [ "${{ matrix.dependencies }}" == "lowest" ]; then
+            composer update --prefer-lowest --prefer-stable --prefer-dist --no-interaction
+          else
+            composer update --prefer-stable --prefer-dist --no-interaction
+          fi
 
       - name: Execute tests
         run: composer test -- --compact
