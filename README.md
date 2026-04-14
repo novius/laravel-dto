@@ -195,6 +195,8 @@ $array = $dto->toArray();
 
 ## Testing
 
+The package uses [Pest](https://pestphp.com/) for testing.
+
 ```bash
 composer test
 ```

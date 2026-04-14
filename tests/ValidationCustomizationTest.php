@@ -4,38 +4,26 @@ namespace Novius\LaravelDto\Tests;
 
 use Illuminate\Validation\ValidationException;
 use Novius\LaravelDto\Dto;
-use Orchestra\Testbench\TestCase;
 
-class ValidationCustomizationTest extends TestCase
-{
-    /** @test */
-    public function it_can_customize_validation_messages()
-    {
-        $this->expectException(ValidationException::class);
-
-        try {
-            new CustomValidationDto(['name' => 'Jo']);
-        } catch (ValidationException $e) {
-            $this->assertEquals('The name is too short!', $e->validator->errors()->first('name'));
-            throw $e;
-        }
+test('it can customize validation messages', function () {
+    try {
+        new CustomValidationDto(['name' => 'Jo']);
+    } catch (ValidationException $e) {
+        expect($e->validator->errors()->first('name'))->toBe('The name is too short!');
+        throw $e;
     }
+})->throws(ValidationException::class);
 
-    /** @test */
-    public function it_can_customize_validation_attributes()
-    {
-        $this->expectException(ValidationException::class);
-
-        try {
-            new CustomValidationDto(['email' => 'invalid-email']);
-        } catch (ValidationException $e) {
-            // "The user email field must be a valid email address." (default Laravel message)
-            // But with 'user email' as attribute name instead of 'email'
-            $this->assertStringContainsString('user email', $e->validator->errors()->first('email'));
-            throw $e;
-        }
+test('it can customize validation attributes', function () {
+    try {
+        new CustomValidationDto(['email' => 'invalid-email']);
+    } catch (ValidationException $e) {
+        // "The user email field must be a valid email address." (default Laravel message)
+        // But with 'user email' as attribute name instead of 'email'
+        expect($e->validator->errors()->first('email'))->toContain('user email');
+        throw $e;
     }
-}
+})->throws(ValidationException::class);
 
 class CustomValidationDto extends Dto
 {

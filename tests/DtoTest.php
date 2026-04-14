@@ -5,87 +5,61 @@ namespace Novius\LaravelDto\Tests;
 use Illuminate\Validation\ValidationException;
 use InvalidArgumentException;
 use Novius\LaravelDto\Dto;
-use Orchestra\Testbench\TestCase;
 
-class DtoTest extends TestCase
-{
-    /** @test */
-    public function it_can_create_a_dto_with_attributes()
-    {
-        $dto = new UserDto(['name' => 'John Doe', 'age' => 30]);
+test('it can create a dto with attributes', function () {
+    $dto = new UserDto(['name' => 'John Doe', 'age' => 30]);
 
-        $this->assertEquals('John Doe', $dto->name);
-        $this->assertEquals(30, $dto->age);
-    }
+    expect($dto->name)->toBe('John Doe')
+        ->and($dto->age)->toBe(30);
+});
 
-    /** @test */
-    public function it_throws_exception_if_property_does_not_exist()
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage("Property 'email' does not exist");
+test('it throws exception if property does not exist', function () {
+    new UserDto(['email' => 'john@example.com']);
+})->throws(InvalidArgumentException::class, "Property 'email' does not exist");
 
-        new UserDto(['email' => 'john@example.com']);
-    }
+test('it applies default values', function () {
+    $dto = new UserDto(['name' => 'John Doe']);
 
-    /** @test */
-    public function it_applies_default_values()
-    {
-        $dto = new UserDto(['name' => 'John Doe']);
+    expect($dto->age)->toBe(18);
+});
 
-        $this->assertEquals(18, $dto->age);
-    }
+test('it validates properties on constructor', function () {
+    new UserDto(['name' => 'J', 'age' => 30]); // Name too short
+})->throws(ValidationException::class);
 
-    /** @test */
-    public function it_validates_properties_on_constructor()
-    {
-        $this->expectException(ValidationException::class);
+test('it casts properties', function () {
+    $dto = new UserDto(['name' => 'John Doe', 'age' => '25']);
 
-        new UserDto(['name' => 'J', 'age' => 30]); // Name too short
-    }
+    expect($dto->age)->toBe(25)
+        ->and($dto->age)->toBeInt();
+});
 
-    /** @test */
-    public function it_casts_properties()
-    {
-        $dto = new UserDto(['name' => 'John Doe', 'age' => '25']);
+test('it works with magic getters', function () {
+    $dto = new UserDto(['name' => 'John Doe', 'age' => 30]);
 
-        $this->assertSame(25, $dto->age);
-        $this->assertIsInt($dto->age);
-    }
+    expect($dto->getName())->toBe('John Doe')
+        ->and($dto->getAge())->toBe(30);
+});
 
-    /** @test */
-    public function it_works_with_magic_getters()
-    {
-        $dto = new UserDto(['name' => 'John Doe', 'age' => 30]);
+test('it works with magic setters and validates', function () {
+    $dto = new UserDto(['name' => 'John Doe', 'age' => 30]);
 
-        $this->assertEquals('John Doe', $dto->getName());
-        $this->assertEquals(30, $dto->getAge());
-    }
+    $dto->setName('Jane Doe');
+    expect($dto->name)->toBe('Jane Doe');
 
-    /** @test */
-    public function it_works_with_magic_setters_and_validates()
-    {
-        $dto = new UserDto(['name' => 'John Doe', 'age' => 30]);
+    $dto->setName('J');
+})->throws(ValidationException::class);
 
-        $dto->setName('Jane Doe');
-        $this->assertEquals('Jane Doe', $dto->name);
+test('it can convert to array', function () {
+    $dto = new UserDto(['name' => 'John Doe', 'age' => '30']);
 
-        $this->expectException(ValidationException::class);
-        $dto->setName('J');
-    }
+    $expected = [
+        'name' => 'John Doe',
+        'age' => 30,
+    ];
 
-    /** @test */
-    public function it_can_convert_to_array()
-    {
-        $dto = new UserDto(['name' => 'John Doe', 'age' => '30']);
-
-        $expected = [
-            'name' => 'John Doe',
-            'age' => 30,
-        ];
-
-        $this->assertEquals($expected, $dto->toArray());
-    }
-}
+    expect($dto->toArray())->toBe($expected);
+});
 
 /**
  * @property string $name

@@ -6,133 +6,110 @@ use Carbon\Carbon;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Crypt;
 use Novius\LaravelDto\Dto;
-use Orchestra\Testbench\TestCase;
 
-class CastingTest extends TestCase
-{
-    protected function getEnvironmentSetUp($app)
-    {
-        $app['config']->set('app.key', 'base64:'.base64_encode(random_bytes(32)));
-    }
+beforeEach(function () {
+    config()->set('app.key', 'base64:'.base64_encode(random_bytes(32)));
+});
 
-    /** @test */
-    public function it_casts_to_date()
-    {
-        $dto = new CastDto(['date' => '2024-01-01']);
-        $this->assertInstanceOf(Carbon::class, $dto->date);
-        $this->assertEquals('2024-01-01', $dto->date->format('Y-m-d'));
-    }
+test('it casts to date', function () {
+    $dto = new CastDto(['date' => '2024-01-01']);
+    expect($dto->date)->toBeInstanceOf(Carbon::class)
+        ->and($dto->date->format('Y-m-d'))->toBe('2024-01-01');
+});
 
-    /** @test */
-    public function it_casts_to_datetime()
-    {
-        $dto = new CastDto(['datetime' => '2024-01-01 12:00:00']);
-        $this->assertInstanceOf(Carbon::class, $dto->datetime);
-        $this->assertEquals('2024-01-01 12:00:00', $dto->datetime->format('Y-m-d H:i:s'));
-    }
+test('it casts to datetime', function () {
+    $dto = new CastDto(['datetime' => '2024-01-01 12:00:00']);
+    expect($dto->datetime)->toBeInstanceOf(Carbon::class)
+        ->and($dto->datetime->format('Y-m-d H:i:s'))->toBe('2024-01-01 12:00:00');
+});
 
-    /** @test */
-    public function it_casts_to_immutable_date()
-    {
-        $dto = new CastDto(['immutable_date' => '2024-01-01']);
-        $this->assertInstanceOf(CarbonImmutable::class, $dto->immutable_date);
-    }
+test('it casts to immutable date', function () {
+    $dto = new CastDto(['immutable_date' => '2024-01-01']);
+    expect($dto->immutable_date)->toBeInstanceOf(CarbonImmutable::class);
+});
 
-    /** @test */
-    public function it_casts_to_immutable_datetime()
-    {
-        $dto = new CastDto(['immutable_datetime' => '2024-01-01 12:00:00']);
-        $this->assertInstanceOf(CarbonImmutable::class, $dto->immutable_datetime);
-    }
+test('it casts to immutable datetime', function () {
+    $dto = new CastDto(['immutable_datetime' => '2024-01-01 12:00:00']);
+    expect($dto->immutable_datetime)->toBeInstanceOf(CarbonImmutable::class);
+});
 
-    /** @test */
-    public function it_casts_to_decimal()
-    {
-        $dto = new CastDto(['decimal' => '12.3456']);
-        $this->assertEquals('12.35', $dto->decimal);
-    }
+test('it casts to decimal', function () {
+    $dto = new CastDto(['decimal' => '12.3456']);
+    expect($dto->decimal)->toBe('12.35');
+});
 
-    /** @test */
-    public function it_casts_to_json()
-    {
-        $dto = new CastDto(['json' => '{"foo":"bar"}']);
-        $this->assertIsArray($dto->json);
-        $this->assertEquals(['foo' => 'bar'], $dto->json);
-    }
+test('it casts to json', function () {
+    $dto = new CastDto(['json' => '{"foo":"bar"}']);
+    expect($dto->json)->toBeArray()
+        ->and($dto->json)->toBe(['foo' => 'bar']);
+});
 
-    /** @test */
-    public function it_casts_to_encrypted()
-    {
-        $value = 'secret';
-        $encrypted = Crypt::encryptString($value);
-        $dto = new CastDto(['encrypted' => $encrypted]);
-        $this->assertEquals($value, $dto->encrypted);
-    }
+test('it casts to encrypted', function () {
+    $value = 'secret';
+    $encrypted = Crypt::encryptString($value);
+    $dto = new CastDto(['encrypted' => $encrypted]);
+    expect($dto->encrypted)->toBe($value);
+});
 
-    /** @test */
-    public function it_casts_to_boolean_with_filter_var()
-    {
-        $dto = new CastDto([
-            'bool_true' => 'true',
-            'bool_false' => 'false',
-            'bool_yes' => 'yes',
-            'bool_no' => 'no',
-            'bool_on' => 'on',
-            'bool_off' => 'off',
-            'bool_1' => '1',
-            'bool_0' => '0',
-            'bool_native_true' => true,
-            'bool_native_false' => false,
-        ]);
+test('it casts to boolean with filter var', function () {
+    $dto = new CastDto([
+        'bool_true' => 'true',
+        'bool_false' => 'false',
+        'bool_yes' => 'yes',
+        'bool_no' => 'no',
+        'bool_on' => 'on',
+        'bool_off' => 'off',
+        'bool_1' => '1',
+        'bool_0' => '0',
+        'bool_native_true' => true,
+        'bool_native_false' => false,
+    ]);
 
-        $this->assertTrue($dto->bool_true);
-        $this->assertFalse($dto->bool_false);
-        $this->assertTrue($dto->bool_yes);
-        $this->assertFalse($dto->bool_no);
-        $this->assertTrue($dto->bool_on);
-        $this->assertFalse($dto->bool_off);
-        $this->assertTrue($dto->bool_1);
-        $this->assertFalse($dto->bool_0);
-        $this->assertTrue($dto->bool_native_true);
-        $this->assertFalse($dto->bool_native_false);
-    }
+    expect($dto->bool_true)->toBeTrue()
+        ->and($dto->bool_false)->toBeFalse()
+        ->and($dto->bool_yes)->toBeTrue()
+        ->and($dto->bool_no)->toBeFalse()
+        ->and($dto->bool_on)->toBeTrue()
+        ->and($dto->bool_off)->toBeFalse()
+        ->and($dto->bool_1)->toBeTrue()
+        ->and($dto->bool_0)->toBeFalse()
+        ->and($dto->bool_native_true)->toBeTrue()
+        ->and($dto->bool_native_false)->toBeFalse();
+});
 
-    /** @test */
-    public function it_can_convert_to_array_with_casts()
-    {
-        $dto = new CastDto([
-            'date' => '2024-01-01',
-            'datetime' => '2024-01-01 12:00:00',
-            'immutable_date' => '2024-01-01',
-            'immutable_datetime' => '2024-01-01 12:00:00',
-            'decimal' => '12.3456',
-            'json' => '{"foo":"bar"}',
-            'encrypted' => Crypt::encryptString('secret'),
-            'bool_true' => 'true',
-            'bool_false' => 'false',
-            'bool_yes' => 'yes',
-            'bool_no' => 'no',
-            'bool_on' => 'on',
-            'bool_off' => 'off',
-            'bool_1' => '1',
-            'bool_0' => '0',
-            'bool_native_true' => true,
-            'bool_native_false' => false,
-        ]);
+test('it can convert to array with casts', function () {
+    $dto = new CastDto([
+        'date' => '2024-01-01',
+        'datetime' => '2024-01-01 12:00:00',
+        'immutable_date' => '2024-01-01',
+        'immutable_datetime' => '2024-01-01 12:00:00',
+        'decimal' => '12.3456',
+        'json' => '{"foo":"bar"}',
+        'encrypted' => Crypt::encryptString('secret'),
+        'bool_true' => 'true',
+        'bool_false' => 'false',
+        'bool_yes' => 'yes',
+        'bool_no' => 'no',
+        'bool_on' => 'on',
+        'bool_off' => 'off',
+        'bool_1' => '1',
+        'bool_0' => '0',
+        'bool_native_true' => true,
+        'bool_native_false' => false,
+    ]);
 
-        $array = $dto->toArray();
+    $array = $dto->toArray();
 
-        $this->assertEquals('2024-01-01', $array['date']);
-        $this->assertEquals('2024-01-01 12:00:00', $array['datetime']);
-        $this->assertEquals('2024-01-01', $array['immutable_date']);
-        $this->assertEquals('2024-01-01 12:00:00', $array['immutable_datetime']);
-        $this->assertEquals('12.35', $array['decimal']);
-        $this->assertEquals(['foo' => 'bar'], $array['json']);
-        $this->assertEquals('secret', $array['encrypted']);
-        $this->assertTrue($array['bool_true']);
-        $this->assertFalse($array['bool_false']);
-    }
-}
+    expect($array['date'])->toBe('2024-01-01')
+        ->and($array['datetime'])->toBe('2024-01-01 12:00:00')
+        ->and($array['immutable_date'])->toBe('2024-01-01')
+        ->and($array['immutable_datetime'])->toBe('2024-01-01 12:00:00')
+        ->and($array['decimal'])->toBe('12.35')
+        ->and($array['json'])->toBe(['foo' => 'bar'])
+        ->and($array['encrypted'])->toBe('secret')
+        ->and($array['bool_true'])->toBeTrue()
+        ->and($array['bool_false'])->toBeFalse();
+});
 
 /**
  * @property Carbon $date

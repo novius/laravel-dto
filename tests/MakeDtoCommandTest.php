@@ -3,36 +3,22 @@
 namespace Novius\LaravelDto\Tests;
 
 use Illuminate\Support\Facades\File;
-use Novius\LaravelDto\DtoServiceProvider;
-use Orchestra\Testbench\TestCase;
 
-class MakeDtoCommandTest extends TestCase
-{
-    protected function getPackageProviders($app)
-    {
-        return [
-            DtoServiceProvider::class,
-        ];
+test('it can generate a dto class', function () {
+    $dtoPath = app_path('Dtos/TestDto.php');
+
+    if (File::exists($dtoPath)) {
+        File::delete($dtoPath);
     }
 
-    /** @test */
-    public function it_can_generate_a_dto_class()
-    {
-        $dtoPath = app_path('Dtos/TestDto.php');
+    $this->artisan('make:dto', ['name' => 'TestDto'])
+        ->assertExitCode(0);
 
-        if (File::exists($dtoPath)) {
-            File::delete($dtoPath);
-        }
+    expect(File::exists($dtoPath))->toBeTrue();
 
-        $this->artisan('make:dto', ['name' => 'TestDto'])
-            ->assertExitCode(0);
+    $content = File::get($dtoPath);
 
-        $this->assertTrue(File::exists($dtoPath));
-
-        $content = File::get($dtoPath);
-
-        $this->assertStringContainsString('namespace App\Dtos;', $content);
-        $this->assertStringContainsString('class TestDto extends Dto', $content);
-        $this->assertStringContainsString('use Novius\LaravelDto\Dto;', $content);
-    }
-}
+    expect($content)->toContain('namespace App\Dtos;')
+        ->and($content)->toContain('class TestDto extends Dto')
+        ->and($content)->toContain('use Novius\LaravelDto\Dto;');
+});

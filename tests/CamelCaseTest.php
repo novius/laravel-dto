@@ -3,57 +3,43 @@
 namespace Novius\LaravelDto\Tests;
 
 use Novius\LaravelDto\Dto;
-use Orchestra\Testbench\TestCase;
 
-class CamelCaseTest extends TestCase
-{
-    /** @test */
-    public function it_can_access_snake_case_properties_via_camel_case_getters()
-    {
-        $dto = new SnakeDto(['first_name' => 'John', 'last_name' => 'Doe']);
+test('it can access snake case properties via camel case getters', function () {
+    $dto = new SnakeDto(['first_name' => 'John', 'last_name' => 'Doe']);
 
-        $this->assertEquals('John', $dto->getFirstName());
-        $this->assertEquals('Doe', $dto->getLastName());
-    }
+    expect($dto->getFirstName())->toBe('John')
+        ->and($dto->getLastName())->toBe('Doe');
+});
 
-    /** @test */
-    public function it_can_set_snake_case_properties_via_camel_case_setters()
-    {
-        $dto = new SnakeDto(['first_name' => 'John', 'last_name' => 'Doe']);
+test('it can set snake case properties via camel case setters', function () {
+    $dto = new SnakeDto(['first_name' => 'John', 'last_name' => 'Doe']);
 
-        $dto->setFirstName('Jane');
-        $this->assertEquals('Jane', $dto->first_name);
-        $this->assertEquals('Jane', $dto->getFirstName());
-    }
+    $dto->setFirstName('Jane');
+    expect($dto->first_name)->toBe('Jane')
+        ->and($dto->getFirstName())->toBe('Jane');
+});
 
-    /** @test */
-    public function it_can_access_snake_case_properties_via_camel_case_magic_get()
-    {
-        $dto = new SnakeDto(['first_name' => 'John', 'last_name' => 'Doe']);
+test('it can access snake case properties via camel case magic get', function () {
+    $dto = new SnakeDto(['first_name' => 'John', 'last_name' => 'Doe']);
 
-        $this->assertEquals('John', $dto->firstName);
-        $this->assertEquals('Doe', $dto->lastName);
-    }
+    expect($dto->firstName)->toBe('John')
+        ->and($dto->lastName)->toBe('Doe');
+});
 
-    /** @test */
-    public function it_can_set_snake_case_properties_via_camel_case_magic_set()
-    {
-        $dto = new SnakeDto(['first_name' => 'John', 'last_name' => 'Doe']);
+test('it can set snake case properties via camel case magic set', function () {
+    $dto = new SnakeDto(['first_name' => 'John', 'last_name' => 'Doe']);
 
-        $dto->firstName = 'Jane';
-        $this->assertEquals('Jane', $dto->first_name);
-        $this->assertEquals('Jane', $dto->firstName);
-    }
+    $dto->firstName = 'Jane';
+    expect($dto->first_name)->toBe('Jane')
+        ->and($dto->firstName)->toBe('Jane');
+});
 
-    /** @test */
-    public function it_can_check_snake_case_properties_via_camel_case_magic_isset()
-    {
-        $dto = new SnakeDto(['first_name' => 'John']);
+test('it can check snake case properties via camel case magic isset', function () {
+    $dto = new SnakeDto(['first_name' => 'John']);
 
-        $this->assertTrue(isset($dto->firstName));
-        $this->assertFalse(isset($dto->lastName));
-    }
-}
+    expect(isset($dto->firstName))->toBeTrue()
+        ->and(isset($dto->lastName))->toBeFalse();
+});
 
 /**
  * @property string $first_name
