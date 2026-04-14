@@ -67,4 +67,14 @@ class {{ class }} extends Dto
             // 'example_property' => 'string',
         ];
     }
+
+    /**
+     * Define property mapping for toArray().
+     */
+    protected function map(): array
+    {
+        return [
+            // 'example_property' => 'mapped_name',
+        ];
+    }
 }

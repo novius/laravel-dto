@@ -199,6 +199,46 @@ Dates are formatted according to their cast:
 - `Y-m-d` for `date` and `immutable_date`
 - `Y-m-d H:i:s` for `datetime` and `immutable_datetime` (MySQL format)
 
+### Property Mapping
+
+You can map property names to different keys when converting the DTO to an array using the `#[Map]` attribute or the `map()` method.
+
+The `map()` method takes precedence over the attribute.
+
+```php
+use Novius\LaravelDto\Dto;
+use Novius\LaravelDto\Attributes\Map;
+
+class UserDto extends Dto
+{
+    #[Map('dt-debut')]
+    protected string $date_begin;
+
+    protected string $date_end;
+
+    protected function map(): array
+    {
+        return [
+            'date_end' => 'dt-fin',
+        ];
+    }
+}
+
+$dto = new UserDto([
+    'date_begin' => '2024-01-01',
+    'date_end' => '2024-12-31',
+]);
+
+print_r($dto->toArray());
+/*
+Array
+(
+    [dt-debut] => 2024-01-01
+    [dt-fin] => 2024-12-31
+)
+*/
+```
+
 ### Excluding Properties from DTO Mechanisms
 
 You can use the `#[ExcludeFromDTO]` attribute to completely exclude a property from all DTO mechanisms (constructor instantiation, magic getters/setters, fluent interface, validation, and `toArray()` output).

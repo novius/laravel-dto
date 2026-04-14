@@ -15,6 +15,7 @@ use Illuminate\Validation\ValidationException;
 use InvalidArgumentException;
 use JsonException;
 use Novius\LaravelDto\Attributes\ExcludeFromDTO;
+use Novius\LaravelDto\Attributes\Map;
 use ReflectionClass;
 use ReflectionException;
 use ReflectionNamedType;
@@ -70,6 +71,14 @@ abstract class Dto
      * Define cast types.
      */
     protected function casts(): array
+    {
+        return [];
+    }
+
+    /**
+     * Define property mapping for toArray().
+     */
+    protected function map(): array
     {
         return [];
     }
@@ -339,10 +348,33 @@ abstract class Dto
                 continue;
             }
 
-            $data[$name] = $this->transformValue($this->{$name}, $name);
+            $key = $this->getMappedKey($name);
+            $data[$key] = $this->transformValue($this->{$name}, $name);
         }
 
         return $data;
+    }
+
+    /**
+     * Get the mapped key for a property in toArray().
+     *
+     * @throws ReflectionException
+     */
+    protected function getMappedKey(string $name): string
+    {
+        $map = $this->map();
+        if (isset($map[$name])) {
+            return $map[$name];
+        }
+
+        $property = new ReflectionProperty($this, $name);
+        $attributes = $property->getAttributes(Map::class);
+
+        if (! empty($attributes)) {
+            return $attributes[0]->newInstance()->name;
+        }
+
+        return $name;
     }
 
     /**
