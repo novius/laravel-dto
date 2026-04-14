@@ -1,0 +1,70 @@
+<?php
+
+namespace {{ namespace }};
+
+use Novius\LaravelDto\Dto;
+
+/**
+ * @property string $example_property
+ *
+ * @method string getExampleProperty()
+ * @method self setExampleProperty(string $value)
+ */
+class {{ class }} extends Dto
+{
+    /**
+     * Define the properties of the DTO here.
+     * They should generally be protected.
+     */
+    // protected string $example_property;
+
+    /**
+     * Define validation rules.
+     */
+    protected function rules(): array
+    {
+        return [
+            // 'example_property' => 'required|string',
+        ];
+    }
+
+    /**
+     * Define custom validation messages.
+     */
+    protected function messages(): array
+    {
+        return [
+            // 'example_property.required' => 'The example property is mandatory',
+        ];
+    }
+
+    /**
+     * Define custom validation attributes.
+     */
+    protected function attributes(): array
+    {
+        return [
+            // 'example_property' => 'example property name',
+        ];
+    }
+
+    /**
+     * Define default values.
+     */
+    protected function defaults(): array
+    {
+        return [
+            // 'example_property' => 'default_value',
+        ];
+    }
+
+    /**
+     * Define cast types.
+     */
+    protected function casts(): array
+    {
+        return [
+            // 'example_property' => 'string',
+        ];
+    }
+}

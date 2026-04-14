@@ -1,0 +1,56 @@
+{
+    "name": "novius/laravel-dto",
+    "description": "A simple and extensible DTO package for Laravel",
+    "type": "library",
+    "license": "AGPL-3.0-or-later",
+    "homepage": "https://github.com/novius/laravel-dto",
+    "authors": [
+        {
+            "name": "Novius Agency",
+            "email": "team-developpeurs@novius.com",
+            "homepage": "https://www.novius.com"
+        }
+    ],
+    "require": {
+        "php": "^8.2",
+        "illuminate/contracts": "^11.0",
+        "illuminate/support": "^11.0",
+        "illuminate/validation": "^11.0"
+    },
+    "require-dev": {
+        "laravel/pint": "^1.29",
+        "nunomaduro/larastan": "^2.0",
+        "orchestra/testbench": "^9.0",
+        "phpunit/phpunit": "^10.5"
+    },
+    "scripts": {
+        "lint": "vendor/bin/pint",
+        "test": "vendor/bin/phpunit",
+        "analyze": "vendor/bin/phpstan analyse --memory-limit=512M"
+    },
+    "autoload": {
+        "psr-4": {
+            "Novius\\LaravelDto\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Novius\\LaravelDto\\Tests\\": "tests/"
+        }
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "php-http/discovery": true
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Novius\\LaravelDto\\DtoServiceProvider"
+            ]
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}
