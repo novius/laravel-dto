@@ -26,6 +26,15 @@ parameters:
         -
             message: '#Access to an undefined property Illuminate\\Support\\Fluent::\$[a-zA-Z0-9_]+#'
             path: tests/FluentAndNestedDtoTest.php
+        -
+            message: '#Access to protected property Novius\\LaravelDto\\Tests\\FullExcludeDto::\$password#'
+            path: tests/ExcludeFromDTOTest.php
+        -
+            message: '#Call to an undefined method Novius\\LaravelDto\\Tests\\FullExcludeDto::(get|set)?Password\(\)#'
+            path: tests/ExcludeFromDTOTest.php
+        -
+            message: '#Call to an undefined method Novius\\LaravelDto\\Tests\\FullExcludeDto::password\(\)#'
+            path: tests/ExcludeFromDTOTest.php
 
     reportUnmatchedIgnoredErrors: false
 

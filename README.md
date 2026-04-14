@@ -199,8 +199,38 @@ Dates are formatted according to their cast:
 - `Y-m-d` for `date` and `immutable_date`
 - `Y-m-d H:i:s` for `datetime` and `immutable_datetime` (MySQL format)
 
+### Excluding Properties from DTO Mechanisms
+
+You can use the `#[ExcludeFromDTO]` attribute to completely exclude a property from all DTO mechanisms (constructor instantiation, magic getters/setters, fluent interface, validation, and `toArray()` output).
+
+This is useful for properties that you want to keep in the class for internal use only, without them being part of the Data Transfer Object's public data flow.
+
 ```php
-$array = $dto->toArray();
+use Novius\LaravelDto\Dto;
+use Novius\LaravelDto\Attributes\ExcludeFromDTO;
+
+class UserDto extends Dto
+{
+    protected string $name;
+
+    #[ExcludeFromDTO]
+    protected string $internal_token;
+}
+
+// This will throw an InvalidArgumentException because internal_token is excluded
+$dto = new UserDto(['name' => 'John', 'internal_token' => 'secret']);
+
+// This is also forbidden
+$dto = new UserDto(['name' => 'John']);
+$dto->internal_token = 'secret'; // Throws InvalidArgumentException
+```
+
+Excluded properties are not present in the array representation:
+
+```php
+$dto = new UserDto(['name' => 'John']);
+print_r($dto->toArray());
+// Output: ['name' => 'John']
 ```
 
 ## Testing

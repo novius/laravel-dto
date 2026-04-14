@@ -14,6 +14,7 @@ use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use InvalidArgumentException;
 use JsonException;
+use Novius\LaravelDto\Attributes\ExcludeFromDTO;
 use ReflectionClass;
 use ReflectionException;
 use ReflectionNamedType;
@@ -118,6 +119,10 @@ abstract class Dto
             } else {
                 throw new InvalidArgumentException("Property '$name' does not exist in class ".static::class);
             }
+        }
+
+        if ($this->isPropertyExcluded($name)) {
+            throw new InvalidArgumentException("Property '$name' is excluded from DTO in class ".static::class);
         }
 
         $this->validateProperty($name, $value);
@@ -247,14 +252,15 @@ abstract class Dto
         }
 
         // Fluent interface: $dto->name() or $dto->name('value')
-        if (property_exists($this, $name) || property_exists($this, Str::snake($name))) {
+        $propertyToSet = property_exists($this, $name) ? $name : (property_exists($this, Str::snake($name)) ? Str::snake($name) : null);
+        if ($propertyToSet !== null && ! $this->isPropertyExcluded($propertyToSet)) {
             if (count($arguments) > 0) {
-                $this->setProperty($name, $arguments[0]);
+                $this->setProperty($propertyToSet, $arguments[0]);
 
                 return $this;
             }
 
-            return $this->__get($name);
+            return $this->__get($propertyToSet);
         }
 
         throw new InvalidArgumentException("Method $name not found on ".static::class);
@@ -262,15 +268,17 @@ abstract class Dto
 
     /**
      * Magic getter for properties.
+     *
+     * @throws ReflectionException
      */
     public function __get(string $name)
     {
-        if (property_exists($this, $name)) {
+        if (property_exists($this, $name) && ! $this->isPropertyExcluded($name)) {
             return $this->{$name};
         }
 
         $snakeName = Str::snake($name);
-        if (property_exists($this, $snakeName)) {
+        if (property_exists($this, $snakeName) && ! $this->isPropertyExcluded($snakeName)) {
             return $this->{$snakeName};
         }
 
@@ -290,15 +298,17 @@ abstract class Dto
 
     /**
      * Magic isset for properties.
+     *
+     * @throws ReflectionException
      */
     public function __isset(string $name): bool
     {
-        if (property_exists($this, $name)) {
+        if (property_exists($this, $name) && ! $this->isPropertyExcluded($name)) {
             return isset($this->{$name});
         }
 
         $snakeName = Str::snake($name);
-        if (property_exists($this, $snakeName)) {
+        if (property_exists($this, $snakeName) && ! $this->isPropertyExcluded($snakeName)) {
             return isset($this->{$snakeName});
         }
 
@@ -321,6 +331,11 @@ abstract class Dto
 
             // Ignore uninitialized properties
             if (! $property->isInitialized($this)) {
+                continue;
+            }
+
+            // Ignore properties with #[ExcludeFromDTO] attribute
+            if ($this->isPropertyExcluded($name)) {
                 continue;
             }
 
@@ -368,5 +383,17 @@ abstract class Dto
         }
 
         return $value;
+    }
+
+    /**
+     * Check if a property is excluded from DTO mechanisms.
+     *
+     * @throws ReflectionException
+     */
+    protected function isPropertyExcluded(string $name): bool
+    {
+        $property = new ReflectionProperty($this, $name);
+
+        return ! empty($property->getAttributes(ExcludeFromDTO::class));
     }
 }
