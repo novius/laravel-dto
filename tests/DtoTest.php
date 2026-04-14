@@ -23,8 +23,9 @@ test('it applies default values', function () {
     expect($dto->age)->toBe(18);
 });
 
-test('it validates properties on constructor', function () {
-    new UserDto(['name' => 'J', 'age' => 30]); // Name too short
+test('it validates properties', function () {
+    $dto = new UserDto(['name' => 'J', 'age' => 30]); // Name too short
+    $dto->validate();
 })->throws(ValidationException::class);
 
 test('it casts properties', function () {
@@ -41,13 +42,14 @@ test('it works with magic getters', function () {
         ->and($dto->getAge())->toBe(30);
 });
 
-test('it works with magic setters and validates', function () {
+test('it works with magic setters', function () {
     $dto = new UserDto(['name' => 'John Doe', 'age' => 30]);
 
     $dto->setName('Jane Doe');
     expect($dto->name)->toBe('Jane Doe');
 
     $dto->setName('J');
+    $dto->validate();
 })->throws(ValidationException::class);
 
 test('it can convert to array', function () {

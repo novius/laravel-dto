@@ -154,40 +154,7 @@ abstract class Dto
             throw new InvalidArgumentException("Property '$name' is excluded from DTO in class ".static::class);
         }
 
-        $this->validateProperty($name, $value);
         $this->{$name} = $this->castProperty($name, $value);
-    }
-
-    /**
-     * Validate a property according to defined rules.
-     *
-     * @throws ReflectionException
-     */
-    protected function validateProperty(string $name, mixed $value): void
-    {
-        $rules = $this->rules();
-        $propertyRules = $rules[$name] ?? null;
-
-        if ($propertyRules === null) {
-            $property = new ReflectionProperty($this, $name);
-            $attributes = $property->getAttributes(Rules::class);
-            if (! empty($attributes)) {
-                $propertyRules = $attributes[0]->newInstance()->rules;
-            }
-        }
-
-        if ($propertyRules !== null) {
-            $validator = Validator::make(
-                [$name => $value],
-                [$name => $propertyRules],
-                $this->messages(),
-                $this->attributes()
-            );
-
-            if ($validator->fails()) {
-                throw new ValidationException($validator);
-            }
-        }
     }
 
     /**
@@ -367,12 +334,62 @@ abstract class Dto
     }
 
     /**
+     * Validate the DTO according to defined rules.
+     *
+     * @throws ReflectionException
+     * @throws ValidationException
+     */
+    public function validate(): void
+    {
+        $reflection = new ReflectionClass($this);
+        $properties = $reflection->getProperties(ReflectionProperty::IS_PUBLIC | ReflectionProperty::IS_PROTECTED | ReflectionProperty::IS_PRIVATE);
+
+        $data = [];
+        $allRules = $this->rules();
+
+        // Collect all data and initial rules (from methods)
+        foreach ($properties as $property) {
+            $name = $property->getName();
+
+            if ($this->isPropertyExcluded($name)) {
+                continue;
+            }
+
+            if ($property->isInitialized($this)) {
+                $data[$name] = $this->{$name};
+            }
+
+            // Rules from attribute as fallback if not in rules()
+            if (! isset($allRules[$name])) {
+                $attributes = $property->getAttributes(Rules::class);
+                if (! empty($attributes)) {
+                    $allRules[$name] = $attributes[0]->newInstance()->rules;
+                }
+            }
+        }
+
+        $validator = Validator::make(
+            $data,
+            $allRules,
+            $this->messages(),
+            $this->attributes()
+        );
+
+        if ($validator->fails()) {
+            throw new ValidationException($validator);
+        }
+    }
+
+    /**
      * Convert the DTO to an array with validated and casted properties.
      *
      * @throws ReflectionException
+     * @throws ValidationException
      */
     public function toArray(): array
     {
+        $this->validate();
+
         $reflection = new ReflectionClass($this);
         $properties = $reflection->getProperties(ReflectionProperty::IS_PUBLIC | ReflectionProperty::IS_PROTECTED | ReflectionProperty::IS_PRIVATE);
 

@@ -9,7 +9,8 @@ use Novius\LaravelDto\Attributes\Rules;
 use Novius\LaravelDto\Dto;
 
 test('it can use Rules attribute', function () {
-    new AttributeConfigDto(['name' => 'Jo']); // Name too short
+    $dto = new AttributeConfigDto(['name' => 'Jo']); // Name too short
+    $dto->validate();
 })->throws(ValidationException::class);
 
 test('it can use DefaultValue attribute', function () {

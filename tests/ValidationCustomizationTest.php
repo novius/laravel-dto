@@ -7,7 +7,8 @@ use Novius\LaravelDto\Dto;
 
 test('it can customize validation messages', function () {
     try {
-        new CustomValidationDto(['name' => 'Jo']);
+        $dto = new CustomValidationDto(['name' => 'Jo']);
+        $dto->validate();
     } catch (ValidationException $e) {
         expect($e->validator->errors()->first('name'))->toBe('The name is too short!');
         throw $e;
@@ -16,7 +17,8 @@ test('it can customize validation messages', function () {
 
 test('it can customize validation attributes', function () {
     try {
-        new CustomValidationDto(['email' => 'invalid-email']);
+        $dto = new CustomValidationDto(['email' => 'invalid-email']);
+        $dto->validate();
     } catch (ValidationException $e) {
         // "The user email field must be a valid email address." (default Laravel message)
         // But with 'user email' as attribute name instead of 'email'
