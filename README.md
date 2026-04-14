@@ -223,21 +223,58 @@ class UserDto extends Dto
         ];
     }
 }
-
-$dto = new UserDto([
-    'date_begin' => '2024-01-01',
-    'date_end' => '2024-12-31',
-]);
-
-print_r($dto->toArray());
-/*
-Array
-(
-    [dt-debut] => 2024-01-01
-    [dt-fin] => 2024-12-31
-)
-*/
 ```
+
+### Configuration via Attributes
+
+In addition to methods, you can use PHP attributes to configure your properties directly.
+
+#### Validation Rules
+
+Use the `#[Rules]` attribute to define validation rules.
+
+```php
+use Novius\LaravelDto\Attributes\Rules;
+
+class UserDto extends Dto
+{
+    #[Rules('required|string|min:3')]
+    protected string $name;
+}
+```
+
+#### Default Values
+
+Use the `#[DefaultValue]` attribute to define default values.
+
+```php
+use Novius\LaravelDto\Attributes\DefaultValue;
+
+class UserDto extends Dto
+{
+    #[DefaultValue(18)]
+    protected int $age;
+}
+```
+
+#### Custom Casting
+
+Use the `#[Cast]` attribute to define a custom cast type.
+
+```php
+use Novius\LaravelDto\Attributes\Cast;
+
+class UserDto extends Dto
+{
+    #[Cast('bool')]
+    protected $is_admin;
+
+    #[Cast('datetime:Y-m-d H:i')]
+    protected Carbon $created_at;
+}
+```
+
+**Note:** Methods (`rules()`, `defaults()`, `casts()`) always take precedence over attributes.
 
 ### Excluding Properties from DTO Mechanisms
 

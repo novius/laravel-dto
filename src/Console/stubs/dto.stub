@@ -2,6 +2,10 @@
 
 namespace {{ namespace }};
 
+use Novius\LaravelDto\Attributes\Cast;
+use Novius\LaravelDto\Attributes\DefaultValue;
+use Novius\LaravelDto\Attributes\Map;
+use Novius\LaravelDto\Attributes\Rules;
 use Novius\LaravelDto\Dto;
 
 /**
@@ -15,11 +19,17 @@ class {{ class }} extends Dto
     /**
      * Define the properties of the DTO here.
      * They should generally be protected.
+     * You can use attributes to configure them.
      */
+    // #[Rules('required|string')]
+    // #[Cast('string')]
+    // #[DefaultValue('default_value')]
+    // #[Map('mapped_name')]
     // protected string $example_property;
 
     /**
      * Define validation rules.
+     * Rules defined here have priority over #[Rules] attribute.
      */
     protected function rules(): array
     {
@@ -50,6 +60,7 @@ class {{ class }} extends Dto
 
     /**
      * Define default values.
+     * Values defined here have priority over #[DefaultValue] attribute.
      */
     protected function defaults(): array
     {
@@ -60,6 +71,7 @@ class {{ class }} extends Dto
 
     /**
      * Define cast types.
+     * Casts defined here have priority over #[Cast] attribute and native type inference.
      */
     protected function casts(): array
     {
@@ -70,6 +82,7 @@ class {{ class }} extends Dto
 
     /**
      * Define property mapping for toArray().
+     * Mapping defined here have priority over #[Map] attribute.
      */
     protected function map(): array
     {

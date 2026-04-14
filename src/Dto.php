@@ -14,8 +14,11 @@ use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use InvalidArgumentException;
 use JsonException;
+use Novius\LaravelDto\Attributes\Cast;
+use Novius\LaravelDto\Attributes\DefaultValue;
 use Novius\LaravelDto\Attributes\ExcludeFromDTO;
 use Novius\LaravelDto\Attributes\Map;
+use Novius\LaravelDto\Attributes\Rules;
 use ReflectionClass;
 use ReflectionException;
 use ReflectionNamedType;
@@ -106,8 +109,25 @@ abstract class Dto
      */
     protected function applyDefaults(): static
     {
-        foreach ($this->defaults() as $key => $value) {
-            $this->setProperty($key, $value);
+        $defaults = $this->defaults();
+
+        $reflection = new ReflectionClass($this);
+        foreach ($reflection->getProperties() as $property) {
+            $name = $property->getName();
+
+            // Method has priority
+            if (array_key_exists($name, $defaults)) {
+                $this->setProperty($name, $defaults[$name]);
+
+                continue;
+            }
+
+            // Attribute as fallback
+            $attributes = $property->getAttributes(DefaultValue::class);
+            if (! empty($attributes)) {
+                $defaultValue = $attributes[0]->newInstance()->value;
+                $this->setProperty($name, $defaultValue);
+            }
         }
 
         return $this;
@@ -140,14 +160,26 @@ abstract class Dto
 
     /**
      * Validate a property according to defined rules.
+     *
+     * @throws ReflectionException
      */
     protected function validateProperty(string $name, mixed $value): void
     {
         $rules = $this->rules();
-        if (isset($rules[$name])) {
+        $propertyRules = $rules[$name] ?? null;
+
+        if ($propertyRules === null) {
+            $property = new ReflectionProperty($this, $name);
+            $attributes = $property->getAttributes(Rules::class);
+            if (! empty($attributes)) {
+                $propertyRules = $attributes[0]->newInstance()->rules;
+            }
+        }
+
+        if ($propertyRules !== null) {
             $validator = Validator::make(
                 [$name => $value],
-                [$name => $rules[$name]],
+                [$name => $propertyRules],
                 $this->messages(),
                 $this->attributes()
             );
@@ -167,7 +199,17 @@ abstract class Dto
     protected function castProperty(string $name, mixed $value): mixed
     {
         $casts = $this->casts();
-        $type = $casts[$name] ?? $this->getNativeType($name);
+        $type = $casts[$name] ?? null;
+
+        if ($type === null) {
+            $property = new ReflectionProperty($this, $name);
+            $attributes = $property->getAttributes(Cast::class);
+            if (! empty($attributes)) {
+                $type = $attributes[0]->newInstance()->type;
+            }
+        }
+
+        $type ??= $this->getNativeType($name);
 
         if ($type === null || $value === null) {
             return $value;

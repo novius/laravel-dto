@@ -30,6 +30,12 @@ parameters:
             message: '#Access to protected property Novius\\LaravelDto\\Tests\\FullExcludeDto::\$password#'
             path: tests/ExcludeFromDTOTest.php
         -
+            message: '#Access to protected property Novius\\LaravelDto\\Tests\\AttributeConfigDto::\$(age|is_admin)#'
+            path: tests/AttributeConfigurationTest.php
+        -
+            message: '#Access to protected property Novius\\LaravelDto\\Tests\\OverriddenAttributeDto::\$prop#'
+            path: tests/AttributeConfigurationTest.php
+        -
             message: '#Call to an undefined method Novius\\LaravelDto\\Tests\\FullExcludeDto::(get|set)?Password\(\)#'
             path: tests/ExcludeFromDTOTest.php
         -
