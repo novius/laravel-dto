@@ -2,6 +2,7 @@
 
 namespace Novius\LaravelDto;
 
+use BackedEnum;
 use Carbon\Carbon;
 use Carbon\CarbonImmutable;
 use Closure;
@@ -13,6 +14,8 @@ use Illuminate\Validation\ValidationException;
 use InvalidArgumentException;
 use JsonException;
 use ReflectionClass;
+use ReflectionException;
+use ReflectionNamedType;
 use ReflectionProperty;
 
 abstract class Dto
@@ -21,6 +24,7 @@ abstract class Dto
      * @throws ValidationException
      * @throws InvalidArgumentException
      * @throws JsonException
+     * @throws ReflectionException
      */
     public function __construct(array $attributes = [])
     {
@@ -72,6 +76,7 @@ abstract class Dto
      * Fill the object with attributes.
      *
      * @throws JsonException
+     * @throws ReflectionException
      */
     protected function fill(array $attributes): static
     {
@@ -86,6 +91,7 @@ abstract class Dto
      * Apply defined default values.
      *
      * @throws JsonException
+     * @throws ReflectionException
      */
     protected function applyDefaults(): static
     {
@@ -100,6 +106,7 @@ abstract class Dto
      * Set a property with validation and cast.
      *
      * @throws JsonException
+     * @throws ReflectionException
      */
     protected function setProperty(string $name, mixed $value): void
     {
@@ -137,24 +144,26 @@ abstract class Dto
     }
 
     /**
-     * Cast a property according to defined types.
+     * Cast a property according to defined types or native PHP types.
      *
      * @throws JsonException
+     * @throws ReflectionException
      */
     protected function castProperty(string $name, mixed $value): mixed
     {
         $casts = $this->casts();
-        if (! isset($casts[$name]) || $value === null) {
+        $type = $casts[$name] ?? $this->getNativeType($name);
+
+        if ($type === null || $value === null) {
             return $value;
         }
-
-        $type = $casts[$name];
 
         if ($type instanceof Closure) {
             return $type($value);
         }
 
-        if (str_contains($type, ':')) {
+        $parameter = null;
+        if (is_string($type) && str_contains($type, ':')) {
             [$type, $parameter] = explode(':', $type, 2);
         }
 
@@ -165,19 +174,53 @@ abstract class Dto
             'bool', 'boolean' => filter_var($value, FILTER_VALIDATE_BOOLEAN),
             'array' => (array) $value,
             'object' => (object) $value,
-            'date', 'datetime' => Carbon::parse($value),
-            'immutable_date', 'immutable_datetime' => CarbonImmutable::parse($value),
+            'date', 'datetime', Carbon::class => Carbon::parse($value),
+            'immutable_date', 'immutable_datetime', CarbonImmutable::class => CarbonImmutable::parse($value),
             'decimal' => number_format((float) $value, (int) ($parameter ?? 2), '.', ''),
             'json' => is_array($value) ? $value : json_decode((string) $value, true, 512, JSON_THROW_ON_ERROR),
             'encrypted' => Crypt::decryptString($value),
-            default => $value,
+            default => $this->castToSpecialType($type, $value),
         };
+    }
+
+    /**
+     * Get the native PHP type of a property.
+     *
+     * @throws ReflectionException
+     */
+    protected function getNativeType(string $name): ?string
+    {
+        $property = new ReflectionProperty($this, $name);
+        $type = $property->getType();
+
+        if ($type instanceof ReflectionNamedType) {
+            return $type->getName();
+        }
+
+        return null;
+    }
+
+    /**
+     * Cast a value to a special type (Enum, DTO, etc.).
+     */
+    protected function castToSpecialType(string $type, mixed $value): mixed
+    {
+        if (is_subclass_of($type, BackedEnum::class) && enum_exists($type)) {
+            return $type::from($value);
+        }
+
+        if (is_subclass_of($type, self::class) && is_array($value)) {
+            return new $type($value);
+        }
+
+        return $value;
     }
 
     /**
      * Magic getter for properties or via getProperty().
      *
      * @throws JsonException
+     * @throws ReflectionException
      */
     public function __call(string $name, array $arguments)
     {
@@ -229,6 +272,7 @@ abstract class Dto
      * Magic setter for properties.
      *
      * @throws JsonException
+     * @throws ReflectionException
      */
     public function __set(string $name, mixed $value): void
     {
@@ -254,6 +298,8 @@ abstract class Dto
 
     /**
      * Convert the DTO to an array with validated and casted properties.
+     *
+     * @throws ReflectionException
      */
     public function toArray(): array
     {
@@ -277,6 +323,8 @@ abstract class Dto
 
     /**
      * Transform a value for toArray() conversion.
+     *
+     * @throws ReflectionException
      */
     protected function transformValue(mixed $value, string $propertyName): mixed
     {
@@ -284,9 +332,13 @@ abstract class Dto
             return $value->toArray();
         }
 
+        if ($value instanceof BackedEnum) {
+            return $value->value;
+        }
+
         if ($value instanceof DateTimeInterface) {
             $casts = $this->casts();
-            $castType = $casts[$propertyName] ?? '';
+            $castType = $casts[$propertyName] ?? $this->getNativeType($propertyName) ?? '';
             $format = str_contains($castType, 'date') && ! str_contains($castType, 'datetime') ? 'Y-m-d' : 'Y-m-d H:i:s';
             if (str_contains($castType, ':')) {
                 [$type, $parameter] = explode(':', $castType, 2);

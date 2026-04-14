@@ -113,24 +113,33 @@ protected function defaults(): array
 
 ### Casting
 
-The package supports the same cast types as Laravel's Eloquent models.
+The package supports the same cast types as Laravel's Eloquent models. It also **automatically infers** the cast type from the native PHP type of your properties.
+
+```php
+class UserDto extends Dto
+{
+    protected int $age;           // Automatically cast to int
+    protected bool $is_active;    // Automatically cast to bool
+    protected Carbon $created_at; // Automatically cast to Carbon
+    protected UserStatus $status; // Automatically cast to Backed Enum
+    protected AddressDto $address;// Automatically cast to nested DTO
+}
+```
+
+If you need more control, you can still override the `casts()` method. Explicit casts always take precedence over native type inference.
+
+Supported types: `int`, `float`, `string`, `bool`, `array`, `object`, `date`, `datetime`, `immutable_date`, `immutable_datetime`, `decimal:x`, `json`, `encrypted`.
+
+You can also cast properties to [Backed Enums](https://www.php.net/manual/en/language.enumerations.backed.php):
 
 ```php
 protected function casts(): array
 {
     return [
-        'age' => 'int',
-        'is_admin' => 'bool',
-        'created_at' => 'datetime',
-        'settings' => 'json',
-        'price' => 'decimal:2',
-        'secret' => 'encrypted',
-        'callback' => fn ($value) => strtoupper($value), // Cast via closure
+        'status' => UserStatus::class,
     ];
 }
 ```
-
-Supported types: `int`, `float`, `string`, `bool`, `array`, `object`, `date`, `datetime`, `immutable_date`, `immutable_datetime`, `decimal:x`, `json`, `encrypted`.
 
 You can also specify a custom format for date and datetime casts, which will be used when calling `toArray()`:
 
