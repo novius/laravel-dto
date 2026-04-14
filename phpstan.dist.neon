@@ -16,7 +16,7 @@ parameters:
     ignoreErrors:
         -
             message: '#Undefined variable: \$this#'
-            path: tests/MakeDtoCommandTest.php
+            path: tests/Pest.php
         -
             message: '#Call to an undefined method PHPUnit\\Framework\\TestCase::artisan\(\)#'
             path: tests/MakeDtoCommandTest.php
