@@ -39,6 +39,15 @@ abstract class Dto
     }
 
     /**
+     * @throws ReflectionException
+     * @throws JsonException
+     */
+    public static function make(array $attributes = []): static
+    {
+        return new static($attributes);
+    }
+
+    /**
      * Define validation rules.
      */
     protected function rules(): array
