@@ -44,6 +44,7 @@ abstract class Dto
      */
     public static function make(array $attributes = []): static
     {
+        /** @phpstan-ignore-next-line */
         return new static($attributes);
     }
 
