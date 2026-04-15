@@ -2,6 +2,7 @@
 
 namespace Novius\LaravelDto\Tests;
 
+use Illuminate\Validation\ValidationException;
 use Novius\LaravelDto\Dto;
 
 enum UserStatusEnum: string
@@ -43,6 +44,43 @@ test('it can convert to array with enums', function () {
         ->and($array['type'])->toBe(2);
 });
 
+test('it passes validation when property is an enum', function () {
+    $dto = new EnumCastDto(['status' => UserStatusEnum::Active, 'type' => UserTypeEnum::Admin]);
+    $dto->validate();
+    expect($dto->status)->toBe(UserStatusEnum::Active);
+});
+
+class NestedDtoToValidate extends Dto
+{
+    public string $name;
+
+    protected function rules(): array
+    {
+        return [
+            'name' => 'required|min:3',
+        ];
+    }
+}
+
+class ParentDtoToValidate extends Dto
+{
+    public NestedDtoToValidate $child;
+
+    protected function rules(): array
+    {
+        return [
+            'child' => 'required',
+        ];
+    }
+}
+
+test('it validates nested DTOs', function () {
+    $child = new NestedDtoToValidate(['name' => 'Jo']); // Too short
+    $parent = new ParentDtoToValidate(['child' => $child]);
+
+    $parent->validate();
+})->throws(ValidationException::class);
+
 /**
  * @property UserStatusEnum $status
  * @property UserTypeEnum $type
@@ -52,6 +90,14 @@ class EnumCastDto extends Dto
     protected UserStatusEnum $status;
 
     protected UserTypeEnum $type;
+
+    protected function rules(): array
+    {
+        return [
+            'status' => 'required',
+            'type' => 'required',
+        ];
+    }
 
     protected function casts(): array
     {

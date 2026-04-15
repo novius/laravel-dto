@@ -2,6 +2,7 @@
 
 namespace Novius\LaravelDto\Tests;
 
+use DateTimeInterface;
 use Illuminate\Validation\ValidationException;
 use Novius\LaravelDto\Attributes\Cast;
 use Novius\LaravelDto\Attributes\DefaultValue;
@@ -23,6 +24,16 @@ test('it can use Cast attribute', function () {
     expect($dto->is_admin)->toBeTrue();
 });
 
+test('it uses Cast attribute for DateTimeInterface in toArray', function () {
+    $date = '2023-01-01 12:00:00';
+    $dto = new DateTimeCastDto(['date' => $date]);
+
+    $array = $dto->toArray();
+
+    // The Cast attribute #[Cast('date:Y-m-d')] should be respected in toArray()
+    expect($array['date'])->toBe('2023-01-01');
+});
+
 test('methods have priority over attributes', function () {
     $dto = new OverriddenAttributeDto;
     // DefaultValue attribute says 'attr-default', but defaults() method says 'method-default'
@@ -39,6 +50,12 @@ class AttributeConfigDto extends Dto
 
     #[Cast('bool')]
     protected bool $is_admin;
+}
+
+class DateTimeCastDto extends Dto
+{
+    #[Cast('date:Y-m-d')]
+    protected DateTimeInterface $date;
 }
 
 class OverriddenAttributeDto extends Dto

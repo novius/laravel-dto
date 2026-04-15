@@ -366,7 +366,7 @@ abstract class Dto
             }
 
             if ($property->isInitialized($this)) {
-                $data[$name] = $this->{$name};
+                $data[$name] = $this->transformValue($this->{$name}, $name);
             }
 
             // Rules from attribute as fallback if not in rules()
@@ -467,7 +467,17 @@ abstract class Dto
 
         if ($value instanceof DateTimeInterface) {
             $casts = $this->casts();
-            $castType = $casts[$propertyName] ?? $this->getNativeType($propertyName) ?? '';
+            $castType = $casts[$propertyName] ?? null;
+
+            if ($castType === null) {
+                $property = new ReflectionProperty($this, $propertyName);
+                $attributes = $property->getAttributes(Cast::class);
+                if (! empty($attributes)) {
+                    $castType = $attributes[0]->newInstance()->type;
+                }
+            }
+
+            $castType ??= $this->getNativeType($propertyName) ?? '';
             $format = str_contains($castType, 'date') && ! str_contains($castType, 'datetime') ? 'Y-m-d' : 'Y-m-d H:i:s';
             if (str_contains($castType, ':')) {
                 [$type, $parameter] = explode(':', $castType, 2);
