@@ -144,6 +144,14 @@ abstract class Dto
     }
 
     /**
+     * Convert a string to snake case, including numbers as word boundaries.
+     */
+    protected function snakeCase(string $value): string
+    {
+        return Str::snake(preg_replace('/(\d+)/', '_$1', $value));
+    }
+
+    /**
      * Set a property with validation and cast.
      *
      * @throws JsonException
@@ -152,9 +160,13 @@ abstract class Dto
     protected function setProperty(string $name, mixed $value): void
     {
         if (! property_exists($this, $name)) {
-            $snakeName = Str::snake($name);
-            if (property_exists($this, $snakeName)) {
-                $name = $snakeName;
+            $snakeWithNumbers = $this->snakeCase($name);
+            $snakeSimple = Str::snake($name);
+
+            if (property_exists($this, $snakeWithNumbers)) {
+                $name = $snakeWithNumbers;
+            } elseif (property_exists($this, $snakeSimple)) {
+                $name = $snakeSimple;
             } else {
                 throw new InvalidArgumentException("Property '$name' does not exist in class ".static::class);
             }
@@ -280,7 +292,15 @@ abstract class Dto
         }
 
         // Fluent interface: $dto->name() or $dto->name('value')
-        $propertyToSet = property_exists($this, $name) ? $name : (property_exists($this, Str::snake($name)) ? Str::snake($name) : null);
+        $propertyToSet = null;
+        if (property_exists($this, $name)) {
+            $propertyToSet = $name;
+        } elseif (property_exists($this, $this->snakeCase($name))) {
+            $propertyToSet = $this->snakeCase($name);
+        } elseif (property_exists($this, Str::snake($name))) {
+            $propertyToSet = Str::snake($name);
+        }
+
         if ($propertyToSet !== null && ! $this->isPropertyExcluded($propertyToSet)) {
             if (count($arguments) > 0) {
                 $this->setProperty($propertyToSet, $arguments[0]);
@@ -305,9 +325,14 @@ abstract class Dto
             return $this->{$name};
         }
 
-        $snakeName = Str::snake($name);
-        if (property_exists($this, $snakeName) && ! $this->isPropertyExcluded($snakeName)) {
-            return $this->{$snakeName};
+        $snakeWithNumbers = $this->snakeCase($name);
+        if (property_exists($this, $snakeWithNumbers) && ! $this->isPropertyExcluded($snakeWithNumbers)) {
+            return $this->{$snakeWithNumbers};
+        }
+
+        $snakeSimple = Str::snake($name);
+        if (property_exists($this, $snakeSimple) && ! $this->isPropertyExcluded($snakeSimple)) {
+            return $this->{$snakeSimple};
         }
 
         throw new InvalidArgumentException("Property '$name' does not exist in class ".static::class);
@@ -335,9 +360,14 @@ abstract class Dto
             return isset($this->{$name});
         }
 
-        $snakeName = Str::snake($name);
-        if (property_exists($this, $snakeName) && ! $this->isPropertyExcluded($snakeName)) {
-            return isset($this->{$snakeName});
+        $snakeWithNumbers = $this->snakeCase($name);
+        if (property_exists($this, $snakeWithNumbers) && ! $this->isPropertyExcluded($snakeWithNumbers)) {
+            return isset($this->{$snakeWithNumbers});
+        }
+
+        $snakeSimple = Str::snake($name);
+        if (property_exists($this, $snakeSimple) && ! $this->isPropertyExcluded($snakeSimple)) {
+            return isset($this->{$snakeSimple});
         }
 
         return false;
