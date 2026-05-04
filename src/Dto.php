@@ -523,7 +523,7 @@ abstract class Dto
     /**
      * @throws ReflectionException
      */
-    protected function getCastType(string $propertyName): ?string
+    protected function getCastType(string $propertyName): mixed
     {
         $casts = $this->casts();
         $castType = $casts[$propertyName] ?? null;
