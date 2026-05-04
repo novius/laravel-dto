@@ -3,10 +3,10 @@
 namespace Novius\LaravelDto;
 
 use BackedEnum;
-use Carbon\Carbon;
 use Carbon\CarbonImmutable;
 use Closure;
 use DateTimeInterface;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Fluent;
@@ -220,7 +220,7 @@ abstract class Dto
             'bool', 'boolean' => filter_var($value, FILTER_VALIDATE_BOOLEAN),
             'array' => (array) $value,
             'object' => (object) $value,
-            'date', 'datetime', Carbon::class => Carbon::parse($value),
+            'date', 'datetime', Carbon::class, \Carbon\Carbon::class => Carbon::parse($value),
             'immutable_date', 'immutable_datetime', CarbonImmutable::class => CarbonImmutable::parse($value),
             'decimal' => number_format((float) $value, (int) ($parameter ?? 2), '.', ''),
             'json' => is_array($value) ? $value : json_decode((string) $value, true, 512, JSON_THROW_ON_ERROR),
