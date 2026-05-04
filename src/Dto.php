@@ -187,20 +187,13 @@ abstract class Dto
      */
     protected function castProperty(string $name, mixed $value): mixed
     {
-        $casts = $this->casts();
-        $type = $casts[$name] ?? null;
-
-        if ($type === null) {
-            $property = new ReflectionProperty($this, $name);
-            $attributes = $property->getAttributes(Cast::class);
-            if (! empty($attributes)) {
-                $type = $attributes[0]->newInstance()->type;
-            }
+        if ($value === null) {
+            return $value;
         }
 
-        $type ??= $this->getNativeType($name);
+        $type = $this->getCastType($name);
 
-        if ($type === null || $value === null) {
+        if ($type === null) {
             return $value;
         }
 
@@ -496,18 +489,7 @@ abstract class Dto
         }
 
         if ($value instanceof DateTimeInterface) {
-            $casts = $this->casts();
-            $castType = $casts[$propertyName] ?? null;
-
-            if ($castType === null) {
-                $property = new ReflectionProperty($this, $propertyName);
-                $attributes = $property->getAttributes(Cast::class);
-                if (! empty($attributes)) {
-                    $castType = $attributes[0]->newInstance()->type;
-                }
-            }
-
-            $castType ??= $this->getNativeType($propertyName) ?? '';
+            $castType = $this->getCastType($propertyName) ?? '';
             $format = str_contains($castType, 'date') && ! str_contains($castType, 'datetime') ? 'Y-m-d' : 'Y-m-d H:i:s';
             if (str_contains($castType, ':')) {
                 [$type, $parameter] = explode(':', $castType, 2);
@@ -536,5 +518,24 @@ abstract class Dto
         $property = new ReflectionProperty($this, $name);
 
         return ! empty($property->getAttributes(ExcludeFromDTO::class));
+    }
+
+    /**
+     * @throws ReflectionException
+     */
+    protected function getCastType(string $propertyName): ?string
+    {
+        $casts = $this->casts();
+        $castType = $casts[$propertyName] ?? null;
+
+        if ($castType === null) {
+            $property = new ReflectionProperty($this, $propertyName);
+            $attributes = $property->getAttributes(Cast::class);
+            if (! empty($attributes)) {
+                $castType = $attributes[0]->newInstance()->type;
+            }
+        }
+
+        return $castType ?? $this->getNativeType($propertyName);
     }
 }
