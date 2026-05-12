@@ -1,36 +1,58 @@
-name: CI
+name: Novius CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [ "main" ]
   pull_request:
-    branches: [ main ]
+    branches: [ "main" ]
 
 jobs:
-  test:
+  lint-php:
+
     runs-on: ubuntu-latest
 
+    steps:
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Cache composer dependencies
+        uses: actions/cache@v3
+        with:
+          path: vendor
+          key: composer-${{ hashFiles('composer.lock') }}
+
+      - name: Install Dependencies
+        run: composer install -q --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
+
+      - name: Lint PHP code via Laravel Pint
+        run: composer run-script lint
+
+  phpstan:
+
+    runs-on: ubuntu-latest
     strategy:
-      fail-fast: false
       matrix:
-        php: [8.2, 8.3, 8.4, 8.5]
+        php-versions: ['8.2', '8.3', '8.4', '8.5']
         laravel: [11.*, 12.*, 13.*]
         exclude:
-          - php: 8.2
+          - php-versions: '8.2'
             laravel: 13.*
-          - php: 8.3
+          - php-versions: '8.3'
             laravel: 13.*
 
-    name: PHP ${{ matrix.php }} - Laravel ${{ matrix.laravel }}
+    name: phpstan - P${{ matrix.php-versions }} - L${{ matrix.laravel }}
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
+      - uses: shivammathur/setup-php@v2
         with:
-          php-version: ${{ matrix.php }}
+          php-version: ${{ matrix.php-versions }}
+
+      - name: Checkout code
+        uses: actions/checkout@v3
 
       - name: Get composer cache directory
         id: composer-cache
@@ -45,16 +67,54 @@ jobs:
             ${{ runner.os }}-php-${{ matrix.php-versions }}-laravel-${{ matrix.laravel }}-composer-
             ${{ runner.os }}-php-${{ matrix.php-versions }}-
 
-      - name: Install dependencies
+      - name: Install Dependencies
         run: |
           composer require "illuminate/contracts:${{ matrix.laravel }}" "illuminate/support:${{ matrix.laravel }}" "illuminate/validation:${{ matrix.laravel }}" --no-interaction --no-update
           composer install -q --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
 
-      - name: PHP tests
-        run: composer test -- --compact
-
       - name: PHPStan Static Analysis
         run: composer analyze
 
-      - name: Lint PHP code
-        run: composer lint -- --test
+  test-php:
+
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        php-versions: ['8.2', '8.3', '8.4', '8.5']
+        laravel: [11.*, 12.*, 13.*]
+        exclude:
+          - php-versions: '8.2'
+            laravel: 13.*
+          - php-versions: '8.3'
+            laravel: 13.*
+
+    name: test - P${{ matrix.php-versions }} - L${{ matrix.laravel }}
+
+    steps:
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php-versions }}
+
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Get composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+      - name: Cache composer dependencies
+        uses: actions/cache@v3
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-php-${{ matrix.php-versions }}-laravel-${{ matrix.laravel }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-php-${{ matrix.php-versions }}-laravel-${{ matrix.laravel }}-composer-
+            ${{ runner.os }}-php-${{ matrix.php-versions }}-
+
+      - name: Install Dependencies
+        run: |
+          composer require "illuminate/contracts:${{ matrix.laravel }}" "illuminate/support:${{ matrix.laravel }}" "illuminate/validation:${{ matrix.laravel }}" --no-interaction --no-update
+          composer install -q --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
+
+      - name: PHP test
+        run: composer run-script test
