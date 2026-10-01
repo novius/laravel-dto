@@ -37,7 +37,8 @@ jobs:
     strategy:
       matrix:
         php-versions: ['8.2', '8.3', '8.4', '8.5']
-        laravel: [11.*, 12.*, 13.*]
+        # Laravel 11 removed: no stable set of dependencies can be resolved for it (minimum-stability: stable)
+        laravel: [12.*, 13.*]
         exclude:
           - php-versions: '8.2'
             laravel: 13.*
@@ -81,7 +82,8 @@ jobs:
     strategy:
       matrix:
         php-versions: ['8.2', '8.3', '8.4', '8.5']
-        laravel: [11.*, 12.*, 13.*]
+        # Laravel 11 removed: no stable set of dependencies can be resolved for it (minimum-stability: stable)
+        laravel: [12.*, 13.*]
         exclude:
           - php-versions: '8.2'
             laravel: 13.*
