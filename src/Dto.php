@@ -213,13 +213,28 @@ abstract class Dto
             'bool', 'boolean' => filter_var($value, FILTER_VALIDATE_BOOLEAN),
             'array' => (array) $value,
             'object' => (object) $value,
-            'date', 'datetime', Carbon::class, \Carbon\Carbon::class => Carbon::parse($value),
-            'immutable_date', 'immutable_datetime', CarbonImmutable::class => CarbonImmutable::parse($value),
+            'date', 'datetime', Carbon::class, \Carbon\Carbon::class => $this->castToDate(Carbon::class, $value, $parameter),
+            'immutable_date', 'immutable_datetime', CarbonImmutable::class => $this->castToDate(CarbonImmutable::class, $value, $parameter),
             'decimal' => number_format((float) $value, (int) ($parameter ?? 2), '.', ''),
             'json' => is_array($value) ? $value : json_decode((string) $value, true, 512, JSON_THROW_ON_ERROR),
             'encrypted' => Crypt::decryptString($value),
             default => $this->castToSpecialType($type, $value),
         };
+    }
+
+    /**
+     * Cast a value to a date, using the cast format if the value matches it.
+     *
+     * @param  class-string<Carbon|CarbonImmutable>  $class
+     */
+    protected function castToDate(string $class, mixed $value, ?string $format): Carbon|CarbonImmutable
+    {
+        // "!" resets fields not present in the format (e.g. time) instead of using the current time
+        if ($format !== null && is_string($value) && $class::canBeCreatedFromFormat($value, '!'.$format)) {
+            return $class::createFromFormat('!'.$format, $value);
+        }
+
+        return $class::parse($value);
     }
 
     /**

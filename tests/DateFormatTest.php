@@ -21,6 +21,19 @@ test('it can cast datetime with custom format in to array', function () {
     expect($array['datetime'])->toBe('2024-04-14 10:45');
 });
 
+test('it parses date input using the cast format', function () {
+    $dto = new FormattedDateDto(['date' => '01/02/2024']);
+
+    expect($dto->date->format('Y-m-d H:i:s'))->toBe('2024-02-01 00:00:00')
+        ->and($dto->toArray()['date'])->toBe('01/02/2024');
+});
+
+test('it parses datetime input using the cast format', function () {
+    $dto = new FormattedDateDto(['datetime' => '2024-04-14 10:45']);
+
+    expect($dto->datetime->format('Y-m-d H:i:s'))->toBe('2024-04-14 10:45:00');
+});
+
 /**
  * @property Carbon $date
  * @property Carbon $datetime
